@@ -1,10 +1,10 @@
 <?php
   $conf = array(
     // MySQL connection data
-    "dbHost" => 'localhost',
-    "dbName" => 'banking',
-    "dbUser" => 'root',
-    "dbPass" => '',
+    "dbHost" => getenv('MYSQL_DB_HOST'),
+    "dbName" => getenv('PIGGY_DB_NAME'),
+    "dbUser" => getenv('PIGGY_USER'),
+    "dbPass" => getenv('PIGGY_PWD'),
 
     //Préfixes des prélèvements
     "prelev_prefix" => "Prélèvement sur salaire: ",
