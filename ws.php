@@ -5,7 +5,7 @@ include_once("include/functions.inc.php");
 
 class API {
   public static function get($path,$data){
-    include_once "init.php";
+    include_once "include/init.php";
     $datesWhere = '';
 
     // Get transactions list
@@ -49,7 +49,7 @@ class API {
     );
   }
   public static function put($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $st = $conn->prepare('UPDATE '.$path[0].' SET category_id=? WHERE id=?;');
     $st->execute(array(
       ($data->cat_id > 0) ? $data->cat_id : NULL,
@@ -61,7 +61,7 @@ class API {
 class API_db {
   public static $supported_methods = array("delete");
   public static function delete($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $conn->beginTransaction();
     $st = $conn->prepare($resetSQL);
     $st->execute();
@@ -73,7 +73,7 @@ class API_db {
 class API_patterns extends API {
   public static $supported_methods = array("get","post","put","delete");
   public static function post($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     if ($data->cat_id > 0 && !empty($data->pattern)){
       $st = $conn->prepare('INSERT INTO patterns (pattern,category_id) VALUES (?,?)');
       $st->execute(array(
@@ -83,7 +83,7 @@ class API_patterns extends API {
     }
   }
   public static function delete($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $conn->beginTransaction();
     $st = $conn->prepare('DELETE FROM patterns WHERE id = ?');
     $st->execute(array($path[1]));
@@ -94,12 +94,12 @@ class API_patterns extends API {
 class API_withdrawals {
   public static $supported_methods = array("get","post","delete");
   public static function get($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $result = $conn->query('SELECT id,CONCAT(comment," (Total = ",CAST(total as char),"€)") FROM withdrawals;')->fetchAll(PDO::FETCH_KEY_PAIR);
     answer($result);
   }
   public static function post($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $conn->beginTransaction();
 
     $st = $conn->prepare("INSERT INTO withdrawals (comment,total) VALUES(?,?)");
@@ -134,7 +134,7 @@ class API_withdrawals {
     ));
   }
   public static function delete($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $conn->beginTransaction();
 
     $st = $conn->prepare('DELETE FROM transactions WHERE ext_ref = ?');
@@ -165,7 +165,7 @@ class API_transactions extends API {
     if (isset($data->cat_id)) {
       parent::put($path,$data);
     } else if (isset($data->comment)) {
-      include_once "init.php";
+      include_once "include/init.php";
       $st = $conn->prepare('UPDATE transactions SET commentaire=? WHERE id=?;');
       $st->execute(array(
         $data->comment,
@@ -178,7 +178,7 @@ class API_transactions extends API {
 class API_categories {
   public static $supported_methods = array("get");
   public static function get($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $result = $conn->query('SELECT * FROM categories;')->fetchAll(PDO::FETCH_KEY_PAIR);
     answer($result);
   }
@@ -187,7 +187,7 @@ class API_categories {
 class API_synthesis {
   public static $supported_methods = array("get");
   public static function get($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $params = array();
 
     // Check URL
@@ -232,7 +232,7 @@ class API_synthesis {
 class API_years {
   public static $supported_methods = array("get");
   public static function get($path,$data) {
-    include_once "init.php";
+    include_once "include/init.php";
     $result = $conn->query('SELECT DISTINCT YEAR(date_ecriture) FROM transactions')->fetchAll(PDO::FETCH_COLUMN, 0);
     answer($result);
   }

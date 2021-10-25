@@ -123,7 +123,7 @@ class FinData
    * Store transactions into DB
    */
   public function storeInDB() {
-    include_once "init.php";
+    include_once "include/init.php";
     $added = 0;
     $deleted = 0;
 

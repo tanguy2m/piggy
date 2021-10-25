@@ -26,7 +26,7 @@
     $conn->exec("SET CHARACTER SET utf8");
   } catch ( PDOException $e ) {
     include_once("include/functions.inc.php");
-    answer("Impossible de se connecter à la base de données",'503');
+    answer($e->getMessage(),'503');
   }
 
   try {
