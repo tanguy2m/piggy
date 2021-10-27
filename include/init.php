@@ -1,5 +1,21 @@
 <?php
 
+  /* Function to create user if it does not exists */
+  function checkDBandUser() {
+    include("include/conf.inc.php");
+    try {
+      $conn = new PDO('mysql:host='.$conf["dbHost"], 'root', getenv('MARIADB_ROOT_PASSWORD'));
+      $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $conn->query("CREATE DATABASE IF NOT EXISTS ".$conf["dbName"].";");
+      // The GRANT statement also allows you to implicitly create accounts in some cases
+      $conn->query("GRANT ALL PRIVILEGES ON ".$conf["dbName"].".* to ".$conf["dbUser"]."@'%' identified by '".$conf["dbPass"]."';");
+      $conn = null;
+    } catch ( PDOException $e ) {
+      include_once("include/functions.inc.php");
+      answer($e->getMessage(),'503'); // Die
+    }
+  }
+
   /* Fonction exécutant les requêtes SQL de migration de la DB */
   function upgradeDB($currentDBver,$reqDBver,$conn,$migration_scripts){
     // Récupération des indices des requêtes à appliquer sur la base
@@ -19,15 +35,24 @@
   header('Content-Type: text/html; charset=utf-8');
 
   // Connexion à la base
-  try {
-    include("include/conf.inc.php");
-    $conn = new PDO('mysql:host='.$conf["dbHost"].';dbname='.$conf["dbName"], $conf["dbUser"], $conf["dbPass"]);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $conn->exec("SET CHARACTER SET utf8");
-  } catch ( PDOException $e ) {
-    include_once("include/functions.inc.php");
-    answer($e->getMessage(),'503');
-  }
+  $retry = false;
+  do {
+    try {
+      include("include/conf.inc.php");
+      $conn = new PDO('mysql:host='.$conf["dbHost"].';dbname='.$conf["dbName"], $conf["dbUser"], $conf["dbPass"]);
+      $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+      $conn->exec("SET CHARACTER SET utf8");
+    } catch ( PDOException $e ) {
+      if ($e->getCode() == 1045) {
+        $conn = null;
+        checkDBandUser();
+        $retry = true;
+      } else {
+        include_once("include/functions.inc.php");
+        answer($e->getMessage(),'503'); // Die
+      }
+    }
+  } while ($retry);
 
   try {
     include_once("include/sql.inc.php");
