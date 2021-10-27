@@ -240,6 +240,7 @@ class API_years {
 
 // Launch the relevant API function
 try{
+  date_default_timezone_set('Europe/Paris');
   $path = explode("/", substr(@$_SERVER['PATH_INFO'], 1));
   $handler = 'API_'.$path[0];
   $method = strtolower($_SERVER['REQUEST_METHOD']);
