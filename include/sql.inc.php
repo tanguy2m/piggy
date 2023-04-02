@@ -4,7 +4,8 @@
 
   /* Suppression de toutes les tables / triggers créés par l'appli POUR LA VERSION COURANTE */
   $resetSQL =
-  "DROP TABLE IF EXISTS patterns;
+  "DROP VIEW IF EXISTS transactions_to_es;
+  DROP TABLE IF EXISTS patterns;
   DROP TABLE IF EXISTS transactions;
   DROP TABLE IF EXISTS withdrawals;
   DROP TABLE IF EXISTS categories;
@@ -57,6 +58,59 @@
     category_id int,
     PRIMARY KEY (id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
-  );";
+  );
+  
+CREATE VIEW `transactions_to_es` AS 
+select 
+  `t1`.`@timestamp` AS `@timestamp`, 
+  `t1`.`amount` AS `amount`, 
+  `t1`.`message` AS `message`, 
+  `t1`.`comment` AS `comment`, 
+  `t1`.`category` AS `tags`, 
+  concat(
+    `t1`.`md5`, 
+    '-', 
+    lpad(
+      cast(
+        row_number() over (
+          partition by `t1`.`md5` 
+          order by 
+            `t1`.`message`
+        ) as char(3) charset utf8mb4
+      ), 
+      3, 
+      '0'
+    )
+  ) AS `uid` 
+from 
+  (
+    select 
+      concat(
+        `piggy`.`transactions`.`date_ecriture`, 
+        'T22:00:00.000Z'
+      ) AS `@timestamp`, 
+      `piggy`.`transactions`.`montant` AS `amount`, 
+      `piggy`.`transactions`.`commentaire` AS `comment`, 
+      `piggy`.`transactions`.`label` AS `message`, 
+      `piggy`.`categories`.`label` AS `category`, 
+      `day_uid`.`md5` AS `md5` 
+    from 
+      (
+        (
+          `piggy`.`transactions` 
+          left join `piggy`.`day_uid` on(
+            `piggy`.`transactions`.`date_ecriture` = `day_uid`.`date_ecriture`
+          )
+        ) 
+        left join `piggy`.`categories` on(
+          `piggy`.`transactions`.`category_id` = `piggy`.`categories`.`id`
+        )
+      ) 
+    where 
+      `piggy`.`transactions`.`label` not like '%prélèvement sur salaire%'
+  ) `t1` 
+order by 
+  `t1`.`@timestamp`;
+";
 
 ?>
