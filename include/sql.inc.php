@@ -4,7 +4,8 @@
 
   /* Suppression de toutes les tables / triggers créés par l'appli POUR LA VERSION COURANTE */
   $resetSQL =
-  "DROP VIEW IF EXISTS transactions_to_es;
+  "DROP VIEW IF EXISTS day_uid;
+  DROP VIEW IF EXISTS transactions_to_es;
   DROP TABLE IF EXISTS patterns;
   DROP TABLE IF EXISTS transactions;
   DROP TABLE IF EXISTS withdrawals;
@@ -59,7 +60,37 @@
     PRIMARY KEY (id),
     FOREIGN KEY (category_id) REFERENCES categories(id)
   );
-  
+
+CREATE VIEW `day_uid` AS 
+select 
+  `t2`.`date_ecriture` AS `date_ecriture`, 
+  `t2`.`toBeHashed` AS `toBeHashed`, 
+  md5(`t2`.`toBeHashed`) AS `md5` 
+from 
+  (
+    select 
+      `t1`.`date_ecriture` AS `date_ecriture`, 
+      concat(
+        `t1`.`date_ecriture`, 
+        group_concat(`t1`.`data` separator '')
+      ) AS `toBeHashed` 
+    from 
+      (
+        select 
+          `piggy`.`transactions`.`date_ecriture` AS `date_ecriture`, 
+          concat(
+            `piggy`.`transactions`.`label`, 
+            `piggy`.`transactions`.`montant`
+          ) AS `data` 
+        from 
+          `piggy`.`transactions` 
+        where 
+          `piggy`.`transactions`.`label` not like '%prélèvement sur salaire%'
+      ) `t1` 
+    group by 
+      `t1`.`date_ecriture`
+  ) `t2`;
+
 CREATE VIEW `transactions_to_es` AS 
 select 
   `t1`.`@timestamp` AS `@timestamp`, 
