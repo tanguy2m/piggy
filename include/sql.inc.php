@@ -77,15 +77,15 @@ from
     from 
       (
         select 
-          `piggy`.`transactions`.`date_ecriture` AS `date_ecriture`, 
+          `transactions`.`date_ecriture` AS `date_ecriture`, 
           concat(
-            `piggy`.`transactions`.`label`, 
-            `piggy`.`transactions`.`montant`
+            `transactions`.`label`, 
+            `transactions`.`montant`
           ) AS `data` 
         from 
-          `piggy`.`transactions` 
+          `transactions` 
         where 
-          `piggy`.`transactions`.`label` not like '%prélèvement sur salaire%'
+          `transactions`.`label` not like '%prélèvement sur salaire%'
       ) `t1` 
     group by 
       `t1`.`date_ecriture`
@@ -117,28 +117,28 @@ from
   (
     select 
       concat(
-        `piggy`.`transactions`.`date_ecriture`, 
+        `transactions`.`date_ecriture`, 
         'T22:00:00.000Z'
       ) AS `@timestamp`, 
-      `piggy`.`transactions`.`montant` AS `amount`, 
-      `piggy`.`transactions`.`commentaire` AS `comment`, 
-      `piggy`.`transactions`.`label` AS `message`, 
-      `piggy`.`categories`.`label` AS `category`, 
+      `transactions`.`montant` AS `amount`, 
+      `transactions`.`commentaire` AS `comment`, 
+      `transactions`.`label` AS `message`, 
+      `categories`.`label` AS `category`, 
       `day_uid`.`md5` AS `md5` 
     from 
       (
         (
-          `piggy`.`transactions` 
-          left join `piggy`.`day_uid` on(
-            `piggy`.`transactions`.`date_ecriture` = `day_uid`.`date_ecriture`
+          `transactions` 
+          left join `day_uid` on(
+            `transactions`.`date_ecriture` = `day_uid`.`date_ecriture`
           )
         ) 
-        left join `piggy`.`categories` on(
-          `piggy`.`transactions`.`category_id` = `piggy`.`categories`.`id`
+        left join `categories` on(
+          `transactions`.`category_id` = `categories`.`id`
         )
       ) 
     where 
-      `piggy`.`transactions`.`label` not like '%prélèvement sur salaire%'
+      `transactions`.`label` not like '%prélèvement sur salaire%'
   ) `t1` 
 order by 
   `t1`.`@timestamp`;
