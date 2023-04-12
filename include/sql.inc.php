@@ -72,14 +72,18 @@ from
       `t1`.`date_ecriture` AS `date_ecriture`, 
       concat(
         `t1`.`date_ecriture`, 
-        group_concat(`t1`.`data` separator '')
+        group_concat(
+          `t1`.`data` 
+          order by 
+            `t1`.`data` ASC separator ''
+        )
       ) AS `toBeHashed` 
     from 
       (
         select 
           `transactions`.`date_ecriture` AS `date_ecriture`, 
           concat(
-            `transactions`.`label`, 
+            ltrim(`transactions`.`label`), 
             `transactions`.`montant`
           ) AS `data` 
         from 
@@ -106,7 +110,7 @@ select
         row_number() over (
           partition by `t1`.`md5` 
           order by 
-            `t1`.`message`
+            `t1`.`data`
         ) as char(3) charset utf8mb4
       ), 
       3, 
@@ -122,7 +126,11 @@ from
       ) AS `@timestamp`, 
       `transactions`.`montant` AS `amount`, 
       `transactions`.`commentaire` AS `comment`, 
-      `transactions`.`label` AS `message`, 
+      concat(
+        ltrim(`transactions`.`label`), 
+        `transactions`.`montant`
+      ) AS `data`, 
+      ltrim(`transactions`.`label`) AS `message`, 
       `categories`.`label` AS `category`, 
       `day_uid`.`md5` AS `md5` 
     from 
